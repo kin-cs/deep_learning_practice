@@ -4,7 +4,6 @@ Modified and commented by Kin
 
 '''
 
-
 import gym
 import random
 import numpy as np
@@ -13,6 +12,8 @@ from tflearn.layers.estimator import regression
 import tflearn
 from statistics import mean, median
 from collections import Counter
+
+import pdb
 
 LR = 1e-3
 env = gym.make('CartPole-v0')
@@ -77,7 +78,7 @@ def initial_population():
 	return training_data
 
 
-def neural_net_model(input_size):
+def neural_net_model(input_size):  # build the NN
 	network = input_data(shape = [None, input_size, 1], name='input')  # use input_data to build the model
 
 	network = fully_connected(network, 128, activation='relu')
@@ -118,13 +119,38 @@ def train_model(training_data, model=False):
 training_data = initial_population()
 model = train_model(training_data)
 
+scores = []
+choices = []
+
+for each_game in range(10):
+	score = 0
+	game_memory = []
+	prev_obs = []
+	env.reset()
+	for _ in range(goal_steps):
+		env.render()
+		if len(prev_obs) == 0:
+			action = random.randrange(0,2)
+		else:
+			action = np.argmax(model.predict(prev_obs.reshape(-1, len(prev_obs), 1))[0])
+		choices.append(action)  # use to check the ratio of diff predictions later
+
+		new_obs, reward, done, info = env.step(action)
+		prev_obs = new_obs
+		game_memory.append([new_obs, action])
+		score += reward
+		if done:
+			break
+	scores.append(score)
+
+print('Average Score', sum(scores)/len(scores))
+print('Choice 1: {}, Choice 2: {}'.format(choices.count(1)/len(choices),
+										choices.count(0)/len(choices)))
 
 
-
-
-
-
-
+## saving model
+# model.save('carpole.model')
+# model.load('carpole.model')
 
 
 
